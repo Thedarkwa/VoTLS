@@ -1,8 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-
-
 const AppHeader = () => {
   const { user, signOut } = useAuth();
 
