@@ -38,7 +38,6 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md rounded-2xl bg-card p-10 shadow-lg border border-border">
-        <img src={victoryLogo} alt="Voices of The Living Saints" className="h-20 mx-auto mb-4 object-contain" />
         <h1 className="font-display text-2xl text-center text-foreground font-bold mb-1">
           Voices of The Living Saints
         </h1>
