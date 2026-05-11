@@ -38,9 +38,9 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md rounded-2xl bg-card p-10 shadow-lg border border-border">
-        <img src={victoryLogo} alt="Victory Vocals Ghana" className="h-20 mx-auto mb-4 object-contain" />
+        <img src={victoryLogo} alt="Voices of The Living Saints" className="h-20 mx-auto mb-4 object-contain" />
         <h1 className="font-display text-2xl text-center text-foreground font-bold mb-1">
-          Victory Vocals Ghana
+          Voices of The Living Saints
         </h1>
         <p className="text-center text-muted-foreground text-sm tracking-widest uppercase mb-8">
           Attendance Management System
