@@ -19,10 +19,14 @@ const Login = () => {
     setLoading(true);
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}/` },
+        });
         if (error) throw error;
-        toast.success("Account created! You can now sign in.");
-        setIsSignUp(false);
+        toast.success("Account created!");
+        navigate("/");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
