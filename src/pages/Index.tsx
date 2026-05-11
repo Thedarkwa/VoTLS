@@ -35,7 +35,7 @@ const Index = () => {
         {activeTab === "achievers" && <AchieversPage />}
       </main>
       <footer className="text-center py-4 text-muted-foreground text-xs border-t border-border mt-10 bg-secondary">
-        © {new Date().getFullYear()} <span className="text-primary font-semibold">Victory Vocals Ghana</span>. All rights reserved.
+        © {new Date().getFullYear()} <span className="text-primary font-semibold">Voices of The Living Saints</span>. All rights reserved.
       </footer>
     </div>
   );
