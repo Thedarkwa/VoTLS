@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import victoryLogo from "@/assets/victory_logo.jpeg";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -56,7 +55,7 @@ const Login = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@victoryvocals.com"
+              placeholder=""
               required
               className="bg-background border-border text-foreground"
             />
@@ -67,7 +66,7 @@ const Login = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
+              placeholder=""
               required
               className="bg-background border-border text-foreground"
             />
