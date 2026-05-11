@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&family=Outfit:wght@300;400;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 25% 96%;
+    --foreground: 20 30% 15%;
+
+    --card: 30 30% 99%;
+    --card-foreground: 20 30% 15%;
+
+    --popover: 30 30% 99%;
+    --popover-foreground: 20 30% 15%;
+
+    --primary: 25 60% 45%;
+    --primary-foreground: 30 30% 98%;
+
+    --secondary: 30 20% 90%;
+    --secondary-foreground: 20 30% 20%;
+
+    --muted: 30 15% 92%;
+    --muted-foreground: 20 10% 50%;
+
+    --accent: 35 55% 50%;
+    --accent-foreground: 30 30% 98%;
+
+    --destructive: 0 55% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 145 45% 38%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 70% 50%;
+    --warning-foreground: 20 30% 15%;
+
+    --border: 30 15% 88%;
+    --input: 30 15% 88%;
+    --ring: 25 60% 45%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 30 20% 94%;
+    --sidebar-foreground: 20 30% 15%;
+    --sidebar-primary: 25 60% 45%;
+    --sidebar-primary-foreground: 30 30% 98%;
+    --sidebar-accent: 30 15% 90%;
+    --sidebar-accent-foreground: 20 30% 15%;
+    --sidebar-border: 30 15% 88%;
+    --sidebar-ring: 25 60% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+    min-height: 100vh;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Raleway', sans-serif;
+  }
+  .font-body {
+    font-family: 'Outfit', sans-serif;
+  }
+}
