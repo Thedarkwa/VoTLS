@@ -71,3 +71,39 @@ export async function bulkMarkAbsent(memberIds: string[], date: string) {
     .upsert(records, { onConflict: "member_id,date" });
   if (error) throw error;
 }
+
+// Welfare Contributions
+export async function fetchWelfare() {
+  const { data, error } = await supabase
+    .from("welfare_contributions")
+    .select("*")
+    .order("contribution_date", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function addWelfare(record: {
+  member_id: string;
+  amount: number;
+  contribution_date: string;
+  purpose?: string;
+  notes?: string;
+}) {
+  const { data, error } = await supabase
+    .from("welfare_contributions")
+    .insert([record])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateWelfare(id: string, updates: Record<string, any>) {
+  const { error } = await supabase.from("welfare_contributions").update(updates).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteWelfare(id: string) {
+  const { error } = await supabase.from("welfare_contributions").delete().eq("id", id);
+  if (error) throw error;
+}
