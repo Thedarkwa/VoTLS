@@ -82,6 +82,39 @@ export type Database = {
         }
         Relationships: []
       }
+      welfare_contributions: {
+        Row: {
+          amount: number
+          contribution_date: string
+          created_at: string
+          id: string
+          member_id: string
+          notes: string | null
+          purpose: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          contribution_date?: string
+          created_at?: string
+          id?: string
+          member_id: string
+          notes?: string | null
+          purpose?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          contribution_date?: string
+          created_at?: string
+          id?: string
+          member_id?: string
+          notes?: string | null
+          purpose?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
