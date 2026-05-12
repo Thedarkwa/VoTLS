@@ -8,6 +8,7 @@ import AttendancePage from "@/components/AttendancePage";
 import MembersPage from "@/components/MembersPage";
 import ReportsPage from "@/components/ReportsPage";
 import AchieversPage from "@/components/AchieversPage";
+import WelfarePage from "@/components/WelfarePage";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -33,6 +34,7 @@ const Index = () => {
         {activeTab === "members" && <MembersPage />}
         {activeTab === "reports" && <ReportsPage />}
         {activeTab === "achievers" && <AchieversPage />}
+        {activeTab === "welfare" && <WelfarePage />}
       </main>
       <footer className="text-center py-4 text-muted-foreground text-xs border-t border-border mt-10 bg-secondary">
         © {new Date().getFullYear()} <span className="text-primary font-semibold">Voices of The Living Saints</span>. All rights reserved.
