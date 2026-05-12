@@ -107,3 +107,39 @@ export async function deleteWelfare(id: string) {
   const { error } = await supabase.from("welfare_contributions").delete().eq("id", id);
   if (error) throw error;
 }
+
+// Dues Collections
+export async function fetchDues() {
+  const { data, error } = await supabase
+    .from("dues_collections")
+    .select("*")
+    .order("payment_date", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function addDues(record: {
+  member_id: string;
+  amount: number;
+  payment_date: string;
+  period?: string;
+  notes?: string;
+}) {
+  const { data, error } = await supabase
+    .from("dues_collections")
+    .insert([record])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateDues(id: string, updates: Record<string, any>) {
+  const { error } = await supabase.from("dues_collections").update(updates).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteDues(id: string) {
+  const { error } = await supabase.from("dues_collections").delete().eq("id", id);
+  if (error) throw error;
+}
