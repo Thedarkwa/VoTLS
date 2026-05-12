@@ -7,6 +7,7 @@ const tabs = [
   { id: "reports", label: "Reports" },
   { id: "achievers", label: "Achievers" },
   { id: "welfare", label: "Welfare" },
+  { id: "dues", label: "Dues" },
 ];
 
 interface AppNavProps {

@@ -46,6 +46,39 @@ export type Database = {
           },
         ]
       }
+      dues_collections: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          member_id: string
+          notes: string | null
+          payment_date: string
+          period: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          member_id: string
+          notes?: string | null
+          payment_date?: string
+          period?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          member_id?: string
+          notes?: string | null
+          payment_date?: string
+          period?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       members: {
         Row: {
           created_at: string
