@@ -16,15 +16,15 @@ interface AppNavProps {
 }
 
 const AppNav = ({ active, onChange }: AppNavProps) => (
-  <nav className="bg-background/95 border-b border-border flex overflow-x-auto px-6">
+  <nav className="bg-card/70 backdrop-blur-md border-b border-border flex overflow-x-auto px-6 shadow-soft">
     {tabs.map((tab) => (
       <button
         key={tab.id}
         onClick={() => onChange(tab.id)}
         className={cn(
-          "px-5 py-3.5 text-sm font-semibold tracking-wide border-b-3 border-transparent transition-all whitespace-nowrap",
-          "text-foreground/60 hover:text-accent hover:border-primary",
-          active === tab.id && "text-accent border-accent bg-accent/5"
+          "relative px-5 py-3.5 text-sm font-medium tracking-wide border-b-2 border-transparent transition-all whitespace-nowrap",
+          "text-foreground/60 hover:text-foreground",
+          active === tab.id && "text-primary border-primary"
         )}
       >
         {tab.label}
