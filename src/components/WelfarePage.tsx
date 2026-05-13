@@ -133,7 +133,7 @@ const WelfarePage = () => {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-card rounded-xl p-5 border border-border">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Records</p>
           <p className="text-3xl font-display text-foreground mt-1">{filtered.length}</p>
@@ -141,12 +141,6 @@ const WelfarePage = () => {
         <div className="bg-card rounded-xl p-5 border border-border">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Amount</p>
           <p className="text-3xl font-display text-accent mt-1">GHS {total.toFixed(2)}</p>
-        </div>
-        <div className="bg-card rounded-xl p-5 border border-border">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Unique Contributors</p>
-          <p className="text-3xl font-display text-foreground mt-1">
-            {new Set(filtered.map((w: any) => w.member_id)).size}
-          </p>
         </div>
       </div>
 
