@@ -45,7 +45,7 @@ const Login = () => {
           Voices of The Living Saints
         </h1>
         <p className="text-center text-muted-foreground text-sm tracking-widest uppercase mb-8">
-          Attendance Management System
+          Choir Management System
         </p>
 
         <form onSubmit={handleAuth} className="space-y-4">
