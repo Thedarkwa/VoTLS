@@ -5,7 +5,7 @@ const AppHeader = () => {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 h-20 px-6 flex items-center justify-between border-b border-border/50 bg-gradient-primary backdrop-blur-xl shadow-elegant">
+    <header className="sticky top-0 z-50 h-20 px-6 flex items-center justify-between border-b border-border/50 bg-primary shadow-soft">
       <div className="absolute left-1/2 -translate-x-1/2 text-center">
         <h1 className="font-display text-primary-foreground text-lg font-bold tracking-wide">
           Attendance Management System
