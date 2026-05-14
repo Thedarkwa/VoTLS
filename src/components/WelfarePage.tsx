@@ -140,7 +140,7 @@ const WelfarePage = () => {
         </div>
         <div className="bg-card rounded-xl p-5 border border-border">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Amount</p>
-          <p className="text-3xl font-display text-accent mt-1">GHS {total.toFixed(2)}</p>
+          <p className="text-3xl font-display text-accent mt-1">GHC {total.toFixed(2)}</p>
         </div>
       </div>
 
@@ -201,7 +201,7 @@ const WelfarePage = () => {
                 <td className="px-4 py-3 font-semibold">
                   {w.member ? `${w.member.first_name} ${w.member.last_name}` : "Unknown"}
                 </td>
-                <td className="px-4 py-3 text-accent font-bold">GHS {Number(w.amount).toFixed(2)}</td>
+                <td className="px-4 py-3 text-accent font-bold">GHC {Number(w.amount).toFixed(2)}</td>
                 <td className="px-4 py-3">{formatDate(w.contribution_date)}</td>
                 <td className="px-4 py-3">{w.purpose || "-"}</td>
                 <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{w.notes || "-"}</td>
