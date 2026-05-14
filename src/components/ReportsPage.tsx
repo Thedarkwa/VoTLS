@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchMembers, fetchAllAttendance } from "@/lib/queries";
+import { fetchMembers, fetchAllAttendance, fetchWelfare, fetchDues } from "@/lib/queries";
 import { getSundaysInMonth, formatDate, currentMonthStr } from "@/lib/dateUtils";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import * as XLSX from "xlsx";
@@ -16,6 +16,36 @@ const ReportsPage = () => {
 
   const { data: members = [] } = useQuery({ queryKey: ["members"], queryFn: fetchMembers });
   const { data: attendance = [] } = useQuery({ queryKey: ["attendance-all"], queryFn: fetchAllAttendance });
+  const { data: welfare = [] } = useQuery({ queryKey: ["welfare"], queryFn: fetchWelfare });
+  const { data: dues = [] } = useQuery({ queryKey: ["dues"], queryFn: fetchDues });
+
+  const memberName = (id: string) => {
+    const m = members.find((x: any) => x.id === id);
+    return m ? `${m.first_name} ${m.last_name}` : "Unknown";
+  };
+  const memberPart = (id: string) => members.find((x: any) => x.id === id)?.part || "";
+
+  // Filter welfare/dues by selected month/period
+  const finance = useMemo(() => {
+    const [fy, fm] = monthVal.split("-").map(Number);
+    let monthsBack = 1;
+    if (period === "quarterly") monthsBack = 3;
+    else if (period === "semi-annual") monthsBack = 6;
+    else if (period === "yearly") monthsBack = 12;
+
+    const inRange = (dateStr: string) => {
+      const d = new Date(dateStr);
+      const start = new Date(fy, fm - monthsBack, 1);
+      const end = new Date(fy, fm, 0, 23, 59, 59);
+      return d >= start && d <= end;
+    };
+
+    const w = welfare.filter((r: any) => inRange(r.contribution_date));
+    const d = dues.filter((r: any) => inRange(r.payment_date));
+    const welfareTotal = w.reduce((a: number, r: any) => a + Number(r.amount || 0), 0);
+    const duesTotal = d.reduce((a: number, r: any) => a + Number(r.amount || 0), 0);
+    return { welfare: w, dues: d, welfareTotal, duesTotal };
+  }, [welfare, dues, monthVal, period]);
 
   const report = useMemo(() => {
     const [fy, fm] = monthVal.split("-").map(Number);
@@ -104,6 +134,36 @@ const ReportsPage = () => {
     });
     const ws3 = XLSX.utils.json_to_sheet(rawData);
     XLSX.utils.book_append_sheet(wb, ws3, "Raw Data");
+
+    // Welfare sheet
+    const welfareData = finance.welfare.map((r: any, i: number) => ({
+      "#": i + 1,
+      "Date": r.contribution_date,
+      "Name": memberName(r.member_id),
+      "Part": memberPart(r.member_id),
+      "Amount": Number(r.amount),
+      "Purpose": r.purpose || "",
+      "Notes": r.notes || "",
+    }));
+    if (welfareData.length) {
+      const ws4 = XLSX.utils.json_to_sheet(welfareData);
+      XLSX.utils.book_append_sheet(wb, ws4, "Welfare");
+    }
+
+    // Dues sheet
+    const duesData = finance.dues.map((r: any, i: number) => ({
+      "#": i + 1,
+      "Date": r.payment_date,
+      "Name": memberName(r.member_id),
+      "Part": memberPart(r.member_id),
+      "Amount": Number(r.amount),
+      "Period": r.period || "",
+      "Notes": r.notes || "",
+    }));
+    if (duesData.length) {
+      const ws5 = XLSX.utils.json_to_sheet(duesData);
+      XLSX.utils.book_append_sheet(wb, ws5, "Dues");
+    }
 
     XLSX.writeFile(wb, `VVG_Attendance_${type}_${period}_${monthVal}.xlsx`);
   };
@@ -257,6 +317,78 @@ const ReportsPage = () => {
             </PieChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* Welfare Report */}
+      <div className="bg-card rounded-xl p-6 border border-border overflow-x-auto">
+        <div className="flex items-center justify-between mb-4 border-b border-accent pb-2">
+          <h3 className="font-display text-foreground">Welfare Contributions ({period})</h3>
+          <span className="text-sm font-bold text-primary">Total: ₦{finance.welfareTotal.toLocaleString()}</span>
+        </div>
+        {finance.welfare.length === 0 ? (
+          <p className="text-muted-foreground py-4">No welfare contributions in this period.</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-secondary text-secondary-foreground">
+                <th className="px-4 py-3 text-left">#</th>
+                <th className="px-4 py-3 text-left">Date</th>
+                <th className="px-4 py-3 text-left">Member</th>
+                <th className="px-4 py-3 text-left">Part</th>
+                <th className="px-4 py-3 text-left">Amount</th>
+                <th className="px-4 py-3 text-left">Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              {finance.welfare.map((r: any, i: number) => (
+                <tr key={r.id} className="border-b border-border/50 hover:bg-muted/30">
+                  <td className="px-4 py-3">{i + 1}</td>
+                  <td className="px-4 py-3">{formatDate(r.contribution_date)}</td>
+                  <td className="px-4 py-3 font-semibold">{memberName(r.member_id)}</td>
+                  <td className="px-4 py-3">{memberPart(r.member_id)}</td>
+                  <td className="px-4 py-3 font-bold text-primary">₦{Number(r.amount).toLocaleString()}</td>
+                  <td className="px-4 py-3">{r.purpose || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Dues Report */}
+      <div className="bg-card rounded-xl p-6 border border-border overflow-x-auto">
+        <div className="flex items-center justify-between mb-4 border-b border-accent pb-2">
+          <h3 className="font-display text-foreground">Dues Collections ({period})</h3>
+          <span className="text-sm font-bold text-accent">Total: ₦{finance.duesTotal.toLocaleString()}</span>
+        </div>
+        {finance.dues.length === 0 ? (
+          <p className="text-muted-foreground py-4">No dues collected in this period.</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-secondary text-secondary-foreground">
+                <th className="px-4 py-3 text-left">#</th>
+                <th className="px-4 py-3 text-left">Date</th>
+                <th className="px-4 py-3 text-left">Member</th>
+                <th className="px-4 py-3 text-left">Part</th>
+                <th className="px-4 py-3 text-left">Amount</th>
+                <th className="px-4 py-3 text-left">Period</th>
+              </tr>
+            </thead>
+            <tbody>
+              {finance.dues.map((r: any, i: number) => (
+                <tr key={r.id} className="border-b border-border/50 hover:bg-muted/30">
+                  <td className="px-4 py-3">{i + 1}</td>
+                  <td className="px-4 py-3">{formatDate(r.payment_date)}</td>
+                  <td className="px-4 py-3 font-semibold">{memberName(r.member_id)}</td>
+                  <td className="px-4 py-3">{memberPart(r.member_id)}</td>
+                  <td className="px-4 py-3 font-bold text-accent">₦{Number(r.amount).toLocaleString()}</td>
+                  <td className="px-4 py-3">{r.period || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
