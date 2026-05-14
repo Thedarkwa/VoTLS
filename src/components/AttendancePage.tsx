@@ -121,7 +121,7 @@ const AttendancePage = () => {
                   </td>
                   <td className="px-4 py-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      status === "Present" ? "bg-success/15 text-success" :
+                      status === "Present" ? "bg-primary/15 text-primary" :
                       status === "Absent" ? "bg-destructive/15 text-destructive" :
                       "bg-muted text-muted-foreground"
                     }`}>
@@ -132,7 +132,7 @@ const AttendancePage = () => {
                     {status !== "Present" && (
                       <Button
                         size="sm"
-                        className="bg-success hover:bg-success/90 text-foreground"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
                         onClick={() => markMut.mutate({ member_id: m.id, status: "Present" })}
                       >
                         <Check className="w-3 h-3 mr-1" /> Present
