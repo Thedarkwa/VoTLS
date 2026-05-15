@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import logo from "@/assets/votls-logo-full.png";
+import logo from "@/assets/votls-logo-full.jpg";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -42,7 +42,7 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md rounded-2xl bg-card p-10 shadow-lg border border-border">
-        <img src={logo} alt="Voices of The Living Saints" className="h-40 w-auto mx-auto mb-6 object-contain" />
+        <img src={logo} alt="Voices of The Living Saints" className="w-full max-w-xs h-auto mx-auto mb-6 object-contain" />
         <p className="text-center text-muted-foreground text-sm tracking-widest uppercase mb-8">
           Choir Management System
         </p>
