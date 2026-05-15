@@ -137,7 +137,7 @@ const DuesPage = () => {
         </div>
         <div className="bg-card rounded-xl p-5 border border-border">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Collected</p>
-          <p className="text-3xl font-display text-accent mt-1">GHC {total.toFixed(2)}</p>
+          <p className="text-3xl font-display text-accent mt-1">GHS {total.toFixed(2)}</p>
         </div>
       </div>
 
@@ -198,7 +198,7 @@ const DuesPage = () => {
                 <td className="px-4 py-3 font-semibold">
                   {d.member ? `${d.member.first_name} ${d.member.last_name}` : "Unknown"}
                 </td>
-                <td className="px-4 py-3 text-accent font-bold">GHC {Number(d.amount).toFixed(2)}</td>
+                <td className="px-4 py-3 text-accent font-bold">GHS {Number(d.amount).toFixed(2)}</td>
                 <td className="px-4 py-3">{formatDate(d.payment_date)}</td>
                 <td className="px-4 py-3">{d.period || "-"}</td>
                 <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{d.notes || "-"}</td>
