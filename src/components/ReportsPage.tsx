@@ -3,9 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchMembers, fetchAllAttendance, fetchWelfare, fetchDues } from "@/lib/queries";
 import { getSundaysInMonth, formatDate, currentMonthStr } from "@/lib/dateUtils";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import logo from "@/assets/votls-logo.jpg";
 
 const PART_COLORS: Record<string, string> = { Soprano: "#e74c3c", Alto: "#9b59b6", Tenor: "#3498db", Bass: "#27ae60" };
 
@@ -24,6 +27,17 @@ const ReportsPage = () => {
     return m ? `${m.first_name} ${m.last_name}` : "Unknown";
   };
   const memberPart = (id: string) => members.find((x: any) => x.id === id)?.part || "";
+
+  // Load logo as base64 once
+  const loadLogo = async (): Promise<{ dataUrl: string; buffer: ArrayBuffer }> => {
+    const res = await fetch(logo);
+    const buffer = await res.arrayBuffer();
+    let binary = "";
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+    const dataUrl = `data:image/jpeg;base64,${btoa(binary)}`;
+    return { dataUrl, buffer };
+  };
 
   // Filter welfare/dues by selected month/period
   const finance = useMemo(() => {
@@ -94,87 +108,156 @@ const ReportsPage = () => {
     return { rows, avgPct, poorAtt, partsData, distData, totalSessions: dates.length };
   }, [type, period, monthVal, members, attendance]);
 
-  const exportToExcel = () => {
-    const wb = XLSX.utils.book_new();
-
-    // Attendance Report sheet
-    const reportData = report.rows.map((r, i) => ({
-      "#": i + 1,
-      "Name": `${r.m.first_name} ${r.m.last_name}`,
-      "Part": r.m.part,
-      "Total Sessions": r.totalSessions,
-      "Present": r.present,
-      "Absent": r.absent,
-      "Performance (%)": r.pct,
-    }));
-    const ws1 = XLSX.utils.json_to_sheet(reportData);
-    XLSX.utils.book_append_sheet(wb, ws1, "Attendance Report");
-
-    // Poor Attendance sheet
-    if (report.poorAtt.length > 0) {
-      const poorData = report.poorAtt.map((r, i) => ({
-        "#": i + 1,
-        "Name": `${r.m.first_name} ${r.m.last_name}`,
-        "Part": r.m.part,
-        "Performance (%)": r.pct,
-      }));
-      const ws2 = XLSX.utils.json_to_sheet(poorData);
-      XLSX.utils.book_append_sheet(wb, ws2, "Poor Attendance");
-    }
-
-    // Raw attendance data sheet
-    const rawData = attendance.map((a: any) => {
-      const member = members.find((m: any) => m.id === a.member_id);
-      return {
-        "Date": a.date,
-        "Name": member ? `${member.first_name} ${member.last_name}` : "Unknown",
-        "Part": member?.part || "",
-        "Status": a.status,
-      };
+  const addSheetWithLogo = (
+    wb: ExcelJS.Workbook,
+    logoId: number,
+    name: string,
+    title: string,
+    headers: string[],
+    rows: (string | number)[][]
+  ) => {
+    const ws = wb.addWorksheet(name);
+    ws.addImage(logoId, { tl: { col: 0, row: 0 }, ext: { width: 60, height: 60 } });
+    ws.getRow(1).height = 50;
+    ws.mergeCells("B1:G1");
+    const titleCell = ws.getCell("B1");
+    titleCell.value = `Choir Management System — ${title}`;
+    titleCell.font = { bold: true, size: 14, color: { argb: "FF08BBF4" } };
+    titleCell.alignment = { vertical: "middle", horizontal: "left" };
+    ws.addRow([]);
+    const headerRow = ws.addRow(headers);
+    headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    headerRow.eachCell((c) => {
+      c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF08BBF4" } };
     });
-    const ws3 = XLSX.utils.json_to_sheet(rawData);
-    XLSX.utils.book_append_sheet(wb, ws3, "Raw Data");
+    rows.forEach((r) => ws.addRow(r));
+    ws.columns.forEach((col) => {
+      let max = 10;
+      col.eachCell?.({ includeEmpty: false }, (c) => {
+        const len = String(c.value ?? "").length;
+        if (len > max) max = len;
+      });
+      col.width = Math.min(max + 2, 40);
+    });
+  };
 
-    // Welfare sheet
-    const welfareData = finance.welfare.map((r: any, i: number) => ({
-      "#": i + 1,
-      "Date": r.contribution_date,
-      "Name": memberName(r.member_id),
-      "Part": memberPart(r.member_id),
-      "Amount": Number(r.amount),
-      "Purpose": r.purpose || "",
-      "Notes": r.notes || "",
-    }));
-    if (welfareData.length) {
-      const ws4 = XLSX.utils.json_to_sheet(welfareData);
-      XLSX.utils.book_append_sheet(wb, ws4, "Welfare");
+  const exportToExcel = async () => {
+    const { buffer } = await loadLogo();
+    const wb = new ExcelJS.Workbook();
+    const logoId = wb.addImage({ buffer: buffer as any, extension: "jpeg" });
+
+    addSheetWithLogo(wb, logoId, "Attendance Report", `Attendance — ${type === "all" ? "Entire Choir" : type} (${period})`,
+      ["#", "Name", "Part", "Total Sessions", "Present", "Absent", "Performance (%)"],
+      report.rows.map((r, i) => [i + 1, `${r.m.first_name} ${r.m.last_name}`, r.m.part, r.totalSessions, r.present, r.absent, r.pct])
+    );
+
+    if (report.poorAtt.length > 0) {
+      addSheetWithLogo(wb, logoId, "Poor Attendance", "Poor Attendance",
+        ["#", "Name", "Part", "Performance (%)"],
+        report.poorAtt.map((r, i) => [i + 1, `${r.m.first_name} ${r.m.last_name}`, r.m.part, r.pct])
+      );
     }
 
-    // Dues sheet
-    const duesData = finance.dues.map((r: any, i: number) => ({
-      "#": i + 1,
-      "Date": r.payment_date,
-      "Name": memberName(r.member_id),
-      "Part": memberPart(r.member_id),
-      "Amount": Number(r.amount),
-      "Period": r.period || "",
-      "Notes": r.notes || "",
-    }));
-    if (duesData.length) {
-      const ws5 = XLSX.utils.json_to_sheet(duesData);
-      XLSX.utils.book_append_sheet(wb, ws5, "Dues");
+    addSheetWithLogo(wb, logoId, "Raw Data", "Raw Attendance Data",
+      ["Date", "Name", "Part", "Status"],
+      attendance.map((a: any) => {
+        const m = members.find((x: any) => x.id === a.member_id);
+        return [a.date, m ? `${m.first_name} ${m.last_name}` : "Unknown", m?.part || "", a.status];
+      })
+    );
+
+    if (finance.welfare.length) {
+      addSheetWithLogo(wb, logoId, "Welfare", `Welfare Contributions (${period})`,
+        ["#", "Date", "Name", "Part", "Amount", "Purpose", "Notes"],
+        finance.welfare.map((r: any, i: number) => [i + 1, r.contribution_date, memberName(r.member_id), memberPart(r.member_id), Number(r.amount), r.purpose || "", r.notes || ""])
+      );
     }
 
-    XLSX.writeFile(wb, `VVG_Attendance_${type}_${period}_${monthVal}.xlsx`);
+    if (finance.dues.length) {
+      addSheetWithLogo(wb, logoId, "Dues", `Dues Collections (${period})`,
+        ["#", "Date", "Name", "Part", "Amount", "Period", "Notes"],
+        finance.dues.map((r: any, i: number) => [i + 1, r.payment_date, memberName(r.member_id), memberPart(r.member_id), Number(r.amount), r.period || "", r.notes || ""])
+      );
+    }
+
+    const out = await wb.xlsx.writeBuffer();
+    const blob = new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `CMS_Report_${type}_${period}_${monthVal}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportToPDF = async () => {
+    const { dataUrl } = await loadLogo();
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    const addHeader = () => {
+      doc.addImage(dataUrl, "JPEG", 14, 10, 20, 20);
+      doc.setFontSize(14);
+      doc.setTextColor(8, 187, 244);
+      doc.text("Choir Management System", 38, 20);
+      doc.setFontSize(10);
+      doc.setTextColor(80);
+      doc.text(`${period} report — ${monthVal}`, 38, 27);
+      doc.setDrawColor(8, 187, 244);
+      doc.line(14, 33, pageWidth - 14, 33);
+    };
+
+    addHeader();
+    let y = 40;
+
+    autoTable(doc, {
+      startY: y,
+      head: [["#", "Name", "Part", "Sessions", "Present", "Absent", "%"]],
+      body: report.rows.map((r, i) => [i + 1, `${r.m.first_name} ${r.m.last_name}`, r.m.part, r.totalSessions, r.present, r.absent, `${r.pct}%`]),
+      headStyles: { fillColor: [8, 187, 244] },
+      didDrawPage: () => addHeader(),
+      margin: { top: 38 },
+    });
+
+    if (finance.welfare.length) {
+      doc.addPage();
+      autoTable(doc, {
+        startY: 40,
+        head: [["#", "Date", "Name", "Part", "Amount", "Purpose"]],
+        body: finance.welfare.map((r: any, i: number) => [i + 1, r.contribution_date, memberName(r.member_id), memberPart(r.member_id), `₦${Number(r.amount).toLocaleString()}`, r.purpose || "—"]),
+        headStyles: { fillColor: [8, 187, 244] },
+        didDrawPage: () => addHeader(),
+        margin: { top: 38 },
+      });
+    }
+
+    if (finance.dues.length) {
+      doc.addPage();
+      autoTable(doc, {
+        startY: 40,
+        head: [["#", "Date", "Name", "Part", "Amount", "Period"]],
+        body: finance.dues.map((r: any, i: number) => [i + 1, r.payment_date, memberName(r.member_id), memberPart(r.member_id), `₦${Number(r.amount).toLocaleString()}`, r.period || "—"]),
+        headStyles: { fillColor: [8, 187, 244] },
+        didDrawPage: () => addHeader(),
+        margin: { top: 38 },
+      });
+    }
+
+    doc.save(`CMS_Report_${type}_${period}_${monthVal}.pdf`);
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h2 className="font-display text-2xl text-foreground">Reports</h2>
-        <Button onClick={exportToExcel} className="bg-success text-success-foreground">
-          <Download className="w-4 h-4 mr-1" /> Export to Excel
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={exportToExcel} className="bg-success text-success-foreground">
+            <Download className="w-4 h-4 mr-1" /> Excel
+          </Button>
+          <Button onClick={exportToPDF} className="bg-primary text-primary-foreground">
+            <Download className="w-4 h-4 mr-1" /> PDF
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
