@@ -1,10 +1,17 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchMembers, fetchAttendance, markAttendance, deleteAttendance, bulkMarkAbsent } from "@/lib/queries";
+import { fetchMembers, fetchAttendance, markAttendance, deleteAttendance, bulkMarkAbsent, updateAttendanceReason } from "@/lib/queries";
 import { todayStr, formatDate } from "@/lib/dateUtils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Check, Lock, Trash2 } from "lucide-react";
+import { Check, Lock, Trash2, Pencil } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+
+const REASON_OPTIONS = ["Sick", "Travel", "Work", "Family", "Other"] as const;
+type ReasonChoice = typeof REASON_OPTIONS[number];
 
 const PART_BADGE: Record<string, string> = {
   Soprano: "bg-destructive/15 text-destructive",
@@ -17,6 +24,37 @@ const AttendancePage = () => {
   const [date, setDate] = useState(todayStr());
   const [partFilter, setPartFilter] = useState("");
   const qc = useQueryClient();
+
+  // Dialog state for absence reason
+  const [reasonDialog, setReasonDialog] = useState<
+    | { mode: "mark"; memberId: string; memberName: string }
+    | { mode: "edit"; attendanceId: string; memberName: string; current: string | null }
+    | { mode: "bulk"; memberIds: string[] }
+    | null
+  >(null);
+  const [reasonChoice, setReasonChoice] = useState<ReasonChoice>("Sick");
+  const [reasonOther, setReasonOther] = useState("");
+
+  const openMarkAbsent = (memberId: string, memberName: string) => {
+    setReasonChoice("Sick");
+    setReasonOther("");
+    setReasonDialog({ mode: "mark", memberId, memberName });
+  };
+
+  const openEditReason = (attendanceId: string, memberName: string, current: string | null) => {
+    const isPreset = current && (REASON_OPTIONS as readonly string[]).includes(current);
+    setReasonChoice((isPreset ? current : current ? "Other" : "Sick") as ReasonChoice);
+    setReasonOther(isPreset || !current ? "" : current);
+    setReasonDialog({ mode: "edit", attendanceId, memberName, current });
+  };
+
+  const resolvedReason = (): string | null => {
+    if (reasonChoice === "Other") {
+      const t = reasonOther.trim();
+      return t || null;
+    }
+    return reasonChoice;
+  };
 
   const { data: members = [] } = useQuery({ queryKey: ["members"], queryFn: fetchMembers });
   const { data: attendance = [] } = useQuery({
@@ -31,8 +69,8 @@ const AttendancePage = () => {
   const attMap = new Map(attendance.map((a: any) => [a.member_id, a]));
 
   const markMut = useMutation({
-    mutationFn: ({ member_id, status }: { member_id: string; status: string }) =>
-      markAttendance(member_id, date, status),
+    mutationFn: ({ member_id, status, reason }: { member_id: string; status: string; reason?: string | null }) =>
+      markAttendance(member_id, date, status, reason),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["attendance"] });
       qc.invalidateQueries({ queryKey: ["attendance-all"] });
@@ -53,10 +91,35 @@ const AttendancePage = () => {
       toast.info("All members already marked.");
       return;
     }
-    await bulkMarkAbsent(unmarked.map((m: any) => m.id), date);
-    qc.invalidateQueries({ queryKey: ["attendance"] });
-    qc.invalidateQueries({ queryKey: ["attendance-all"] });
-    toast.success(`${unmarked.length} member(s) marked Absent.`);
+    setReasonChoice("Other");
+    setReasonOther("Not specified");
+    setReasonDialog({ mode: "bulk", memberIds: unmarked.map((m: any) => m.id) });
+  };
+
+  const handleReasonSubmit = async () => {
+    if (!reasonDialog) return;
+    if (reasonChoice === "Other" && !reasonOther.trim()) {
+      toast.error("Please describe the reason.");
+      return;
+    }
+    const reason = resolvedReason();
+    try {
+      if (reasonDialog.mode === "mark") {
+        await markMut.mutateAsync({ member_id: reasonDialog.memberId, status: "Absent", reason });
+      } else if (reasonDialog.mode === "edit") {
+        await updateAttendanceReason(reasonDialog.attendanceId, reason);
+        qc.invalidateQueries({ queryKey: ["attendance"] });
+        qc.invalidateQueries({ queryKey: ["attendance-all"] });
+      } else {
+        await bulkMarkAbsent(reasonDialog.memberIds, date, reason);
+        qc.invalidateQueries({ queryKey: ["attendance"] });
+        qc.invalidateQueries({ queryKey: ["attendance-all"] });
+        toast.success(`${reasonDialog.memberIds.length} member(s) marked Absent.`);
+      }
+      setReasonDialog(null);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to save");
+    }
   };
 
   return (
@@ -127,6 +190,19 @@ const AttendancePage = () => {
                     }`}>
                       {status}
                     </span>
+                    {status === "Absent" && (
+                      <div className="mt-1 text-xs text-muted-foreground flex items-center gap-1">
+                        <span>Reason: {rec?.reason || "—"}</span>
+                        <button
+                          type="button"
+                          onClick={() => openEditReason(rec.id, `${m.first_name} ${m.last_name}`, rec?.reason ?? null)}
+                          className="text-primary hover:text-primary/80"
+                          aria-label="Edit reason"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3 flex gap-2">
                     {status !== "Present" && (
@@ -143,9 +219,19 @@ const AttendancePage = () => {
                         size="sm"
                         variant="outline"
                         className="border-warning text-warning"
-                        onClick={() => markMut.mutate({ member_id: m.id, status: "Absent" })}
+                        onClick={() => openMarkAbsent(m.id, `${m.first_name} ${m.last_name}`)}
                       >
                         Mark Absent
+                      </Button>
+                    )}
+                    {status === "Not Marked" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-destructive text-destructive"
+                        onClick={() => openMarkAbsent(m.id, `${m.first_name} ${m.last_name}`)}
+                      >
+                        Absent
                       </Button>
                     )}
                     {rec && (
@@ -168,6 +254,41 @@ const AttendancePage = () => {
           <p className="text-center text-muted-foreground py-8">No members found. Add members first.</p>
         )}
       </div>
+
+      <Dialog open={!!reasonDialog} onOpenChange={(o) => !o && setReasonDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {reasonDialog?.mode === "bulk"
+                ? `Reason for ${reasonDialog?.mode === "bulk" ? (reasonDialog as any).memberIds.length : 0} absentee(s)`
+                : reasonDialog?.mode === "edit"
+                ? `Edit reason — ${(reasonDialog as any)?.memberName ?? ""}`
+                : `Reason for absence — ${(reasonDialog as any)?.memberName ?? ""}`}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <RadioGroup value={reasonChoice} onValueChange={(v) => setReasonChoice(v as ReasonChoice)}>
+              {REASON_OPTIONS.map((opt) => (
+                <div key={opt} className="flex items-center space-x-2">
+                  <RadioGroupItem value={opt} id={`reason-${opt}`} />
+                  <Label htmlFor={`reason-${opt}`}>{opt}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+            {reasonChoice === "Other" && (
+              <Input
+                placeholder="Describe the reason"
+                value={reasonOther}
+                onChange={(e) => setReasonOther(e.target.value)}
+              />
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReasonDialog(null)}>Cancel</Button>
+            <Button className="bg-primary text-primary-foreground" onClick={handleReasonSubmit}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
