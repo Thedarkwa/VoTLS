@@ -224,7 +224,7 @@ const ReportsPage = () => {
       autoTable(doc, {
         startY: 40,
         head: [["#", "Date", "Name", "Part", "Amount", "Purpose"]],
-        body: finance.welfare.map((r: any, i: number) => [i + 1, r.contribution_date, memberName(r.member_id), memberPart(r.member_id), `₦${Number(r.amount).toLocaleString()}`, r.purpose || "—"]),
+        body: finance.welfare.map((r: any, i: number) => [i + 1, r.contribution_date, memberName(r.member_id), memberPart(r.member_id), `GHS ${Number(r.amount).toLocaleString()}`, r.purpose || "—"]),
         headStyles: { fillColor: [8, 187, 244] },
         didDrawPage: () => addHeader(),
         margin: { top: 38 },
