@@ -224,7 +224,7 @@ const ReportsPage = () => {
       autoTable(doc, {
         startY: 40,
         head: [["#", "Date", "Name", "Part", "Amount", "Purpose"]],
-        body: finance.welfare.map((r: any, i: number) => [i + 1, r.contribution_date, memberName(r.member_id), memberPart(r.member_id), `₦${Number(r.amount).toLocaleString()}`, r.purpose || "—"]),
+        body: finance.welfare.map((r: any, i: number) => [i + 1, r.contribution_date, memberName(r.member_id), memberPart(r.member_id), `GHS ${Number(r.amount).toLocaleString()}`, r.purpose || "—"]),
         headStyles: { fillColor: [8, 187, 244] },
         didDrawPage: () => addHeader(),
         margin: { top: 38 },
@@ -236,7 +236,7 @@ const ReportsPage = () => {
       autoTable(doc, {
         startY: 40,
         head: [["#", "Date", "Name", "Part", "Amount", "Period"]],
-        body: finance.dues.map((r: any, i: number) => [i + 1, r.payment_date, memberName(r.member_id), memberPart(r.member_id), `₦${Number(r.amount).toLocaleString()}`, r.period || "—"]),
+        body: finance.dues.map((r: any, i: number) => [i + 1, r.payment_date, memberName(r.member_id), memberPart(r.member_id), `GHS ${Number(r.amount).toLocaleString()}`, r.period || "—"]),
         headStyles: { fillColor: [8, 187, 244] },
         didDrawPage: () => addHeader(),
         margin: { top: 38 },
@@ -406,7 +406,7 @@ const ReportsPage = () => {
       <div className="bg-card rounded-xl p-6 border border-border overflow-x-auto">
         <div className="flex items-center justify-between mb-4 border-b border-accent pb-2">
           <h3 className="font-display text-foreground">Welfare Contributions ({period})</h3>
-          <span className="text-sm font-bold text-primary">Total: ₦{finance.welfareTotal.toLocaleString()}</span>
+          <span className="text-sm font-bold text-primary">Total: GHS {finance.welfareTotal.toLocaleString()}</span>
         </div>
         {finance.welfare.length === 0 ? (
           <p className="text-muted-foreground py-4">No welfare contributions in this period.</p>
@@ -429,7 +429,7 @@ const ReportsPage = () => {
                   <td className="px-4 py-3">{formatDate(r.contribution_date)}</td>
                   <td className="px-4 py-3 font-semibold">{memberName(r.member_id)}</td>
                   <td className="px-4 py-3">{memberPart(r.member_id)}</td>
-                  <td className="px-4 py-3 font-bold text-primary">₦{Number(r.amount).toLocaleString()}</td>
+                  <td className="px-4 py-3 font-bold text-primary">GHS {Number(r.amount).toLocaleString()}</td>
                   <td className="px-4 py-3">{r.purpose || "—"}</td>
                 </tr>
               ))}
@@ -442,7 +442,7 @@ const ReportsPage = () => {
       <div className="bg-card rounded-xl p-6 border border-border overflow-x-auto">
         <div className="flex items-center justify-between mb-4 border-b border-accent pb-2">
           <h3 className="font-display text-foreground">Dues Collections ({period})</h3>
-          <span className="text-sm font-bold text-accent">Total: ₦{finance.duesTotal.toLocaleString()}</span>
+          <span className="text-sm font-bold text-accent">Total: GHS {finance.duesTotal.toLocaleString()}</span>
         </div>
         {finance.dues.length === 0 ? (
           <p className="text-muted-foreground py-4">No dues collected in this period.</p>
@@ -465,7 +465,7 @@ const ReportsPage = () => {
                   <td className="px-4 py-3">{formatDate(r.payment_date)}</td>
                   <td className="px-4 py-3 font-semibold">{memberName(r.member_id)}</td>
                   <td className="px-4 py-3">{memberPart(r.member_id)}</td>
-                  <td className="px-4 py-3 font-bold text-accent">₦{Number(r.amount).toLocaleString()}</td>
+                  <td className="px-4 py-3 font-bold text-accent">GHS {Number(r.amount).toLocaleString()}</td>
                   <td className="px-4 py-3">{r.period || "—"}</td>
                 </tr>
               ))}
