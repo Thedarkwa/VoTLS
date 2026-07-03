@@ -12,7 +12,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [mode, setMode] = useState<"signin" | "forgot">("signin");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -20,15 +20,13 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: `${window.location.origin}/` },
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
         });
         if (error) throw error;
-        toast.success("Account created!");
-        navigate("/");
+        toast.success("Password reset link sent. Check your email.");
+        setMode("signin");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -49,7 +47,7 @@ const Login = () => {
           Voices of The Living Saints
         </h1>
         <p className="text-center text-muted-foreground text-sm tracking-widest uppercase mb-8">
-          Choir Management System
+          {mode === "forgot" ? "Reset your password" : "Choir Management System"}
         </p>
 
         <form onSubmit={handleAuth} className="space-y-4">
@@ -64,45 +62,61 @@ const Login = () => {
               className="bg-background border-border text-foreground"
             />
           </div>
-          <div>
-            <Label className="text-foreground font-bold text-sm">Password</Label>
-            <div className="relative">
-              <Input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder=""
-                required
-                className="bg-background border-border text-foreground pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+          {mode === "signin" && (
+            <div>
+              <div className="flex items-center justify-between">
+                <Label className="text-foreground font-bold text-sm">Password</Label>
+                <button
+                  type="button"
+                  onClick={() => setMode("forgot")}
+                  className="text-xs text-primary font-bold hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder=""
+                  required
+                  className="bg-background border-border text-foreground pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
           <Button
             type="submit"
             disabled={loading}
             className="w-full bg-primary text-primary-foreground font-bold py-3"
           >
-            {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In →"}
+            {loading
+              ? "Please wait..."
+              : mode === "forgot"
+              ? "Send reset link"
+              : "Sign In →"}
           </Button>
         </form>
 
-        <p className="text-center text-sm mt-6 text-muted-foreground">
-          {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-          <button
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-primary font-bold hover:underline"
-          >
-            {isSignUp ? "Sign In" : "Sign Up"}
-          </button>
-        </p>
+        {mode === "forgot" && (
+          <p className="text-center text-sm mt-6 text-muted-foreground">
+            <button
+              onClick={() => setMode("signin")}
+              className="text-primary font-bold hover:underline"
+            >
+              Back to sign in
+            </button>
+          </p>
+        )}
       </div>
     </div>
   );
