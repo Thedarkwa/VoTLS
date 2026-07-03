@@ -1,51 +1,37 @@
-## Goals
+## Goal
+Restrict account creation to admins only. Regular users see just Login and Forgot Password on the auth screen.
 
-1. Capture a reason whenever a member is marked Absent.
-2. Show a "Habitual Absentees" list alongside the Achievers (≥3 absences in the current quarter).
-3. Convert the Achievers page from monthly to quarterly (Q1–Q4).
+## Changes
 
-## 1. Absence reason
+### 1. `src/pages/Login.tsx`
+- Remove sign-up mode: delete `isSignUp` state, the signup branch in `handleAuth`, and the "Don't have an account? Sign Up" toggle at the bottom.
+- Keep only the sign-in flow (`signInWithPassword`).
+- Add a "Forgot password?" link below the password field that opens a small inline form (or toggles to a reset view) where the user enters their email and we call:
+  ```ts
+  supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`
+  })
+  ```
+- Show a success toast: "Password reset link sent. Check your email."
 
-**Database**
-- Add a nullable `reason` text column to `public.attendance` via migration.
+### 2. New page `src/pages/ResetPassword.tsx`
+- Public route that handles the recovery link.
+- Detects the `type=recovery` session (Supabase auto-processes the hash).
+- Shows a "Set new password" form with password + confirm fields (plus the same show/hide eye toggle for consistency).
+- Calls `supabase.auth.updateUser({ password })`, then signs out and redirects to `/login` with a success toast.
 
-**Attendance UI (`AttendancePage.tsx`)**
-- When the user clicks "Mark Absent" (or auto-close marks remaining members), open a dialog with:
-  - Radio/select options: Sick, Travel, Work, Family, Other
-  - Free-text input shown when "Other" is selected (required if Other)
-- Submit calls a new `markAttendance(member_id, date, "Absent", reason)`; reason is saved on the row.
-- For the bulk "Close Attendance" action, ask once for a default reason (e.g. "Not specified") applied to all auto-absences, with the option to edit individually later.
-- Display the reason in the attendance table next to the Absent badge (small muted text or tooltip).
-- Allow editing the reason via a small pencil icon for existing Absent rows.
+### 3. `src/App.tsx`
+- Register `/reset-password` as a public route (outside any auth guard).
 
-**Queries (`lib/queries.ts`)**
-- Update `markAttendance` and `bulkMarkAbsent` signatures to accept an optional `reason`.
+### 4. Admin-created accounts (how new users get in)
+Since sign-up is removed from the UI, admins create users out-of-band. Options:
+- **A. Manual only** — admin creates users from the backend user management screen; new user receives an invite email and sets their password via the same `/reset-password` page. No app code needed beyond the above.
+- **B. In-app admin screen** — add an "Invite user" form for admins (requires a `user_roles` table with an `admin` role, an edge function using the service role to call `auth.admin.inviteUserByEmail`, and role checks).
 
-## 2. Habitual Absentees (quarterly)
-
-- On the Achievers page, add a new section "Habitual Absentees — Q{n} {year}" listing every choir member with ≥3 Absent records within the active quarter's date range.
-- Each row shows: name, part, absence count, attendance %, and the most recent reason(s) (comma-joined, truncated).
-- Sorted by absence count descending.
-- Styled with destructive accent (red tint) to contrast with the achievers' accent styling.
-
-## 3. Quarterly Achievers
-
-- Replace the monthly `<input type="month">` with a quarter selector: a year input + a Q1/Q2/Q3/Q4 dropdown (default = current quarter).
-- Helper in `lib/dateUtils.ts`: `getSundaysInQuarter(year, quarter)` returning all Sundays in that quarter; `currentQuarter()` returning `{ year, quarter }`.
-- Reuse existing achiever logic (perfect attendance, top 3, best by part) but compute over quarter Sundays up to today.
-- Header label: "Outstanding Members — Q{n} {year}".
+## Question for you
+Do you want option A (admins invite users from the backend dashboard — zero extra code) or option B (build an in-app admin-only "Invite user" screen — more work, needs roles + an edge function)?
 
 ## Technical notes
-
-- Migration is additive (nullable column) — no backfill needed; existing rows render with "—" for reason.
-- Reason dialog uses existing shadcn `Dialog` + `RadioGroup` components; no new dependencies.
-- Quarter math: Q1 = Jan–Mar, Q2 = Apr–Jun, Q3 = Jul–Sep, Q4 = Oct–Dec.
-- Reports/Excel/PDF exports are out of scope for this change (can be a follow-up if you want the reason column included in exports).
-
-## Files touched
-
-- `supabase/migrations/*` — add `reason` column
-- `src/lib/queries.ts` — extend mark/bulk signatures
-- `src/lib/dateUtils.ts` — quarter helpers
-- `src/components/AttendancePage.tsx` — reason dialog + display
-- `src/components/AchieversPage.tsx` — quarter selector + habitual absentees section
+- `useAuth` hook is unchanged.
+- Forgot-password flow uses Supabase's built-in email; no template changes required unless you want custom copy.
+- `/reset-password` must be public so the recovery link works before the user is authenticated.
