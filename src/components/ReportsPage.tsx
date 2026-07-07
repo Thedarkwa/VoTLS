@@ -167,7 +167,7 @@ const ReportsPage = () => {
     );
 
     if (finance.welfare.length) {
-      addSheetWithLogo(wb, logoId, "Welfare", `Welfare Contributions (${period})`,
+      addSheetWithLogo(wb, logoId, "Welfare", `Welfare Support Disbursed (${period})`,
         ["#", "Date", "Name", "Part", "Amount", "Purpose", "Notes"],
         finance.welfare.map((r: any, i: number) => [i + 1, r.contribution_date, memberName(r.member_id), memberPart(r.member_id), Number(r.amount), r.purpose || "", r.notes || ""])
       );
@@ -405,21 +405,21 @@ const ReportsPage = () => {
       {/* Welfare Report */}
       <div className="bg-card rounded-xl p-6 border border-border overflow-x-auto">
         <div className="flex items-center justify-between mb-4 border-b border-accent pb-2">
-          <h3 className="font-display text-foreground">Welfare Contributions ({period})</h3>
+          <h3 className="font-display text-foreground">Welfare Support Disbursed ({period})</h3>
           <span className="text-sm font-bold text-primary">Total: GHS {finance.welfareTotal.toLocaleString()}</span>
         </div>
         {finance.welfare.length === 0 ? (
-          <p className="text-muted-foreground py-4">No welfare contributions in this period.</p>
+          <p className="text-muted-foreground py-4">No welfare support disbursed in this period.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-secondary text-secondary-foreground">
                 <th className="px-4 py-3 text-left">#</th>
                 <th className="px-4 py-3 text-left">Date</th>
-                <th className="px-4 py-3 text-left">Member</th>
+                <th className="px-4 py-3 text-left">Recipient</th>
                 <th className="px-4 py-3 text-left">Part</th>
                 <th className="px-4 py-3 text-left">Amount</th>
-                <th className="px-4 py-3 text-left">Purpose</th>
+                <th className="px-4 py-3 text-left">Reason</th>
               </tr>
             </thead>
             <tbody>
