@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search, HandCoins } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, HandHeart } from "lucide-react";
 
 const WelfarePage = () => {
   const qc = useQueryClient();
@@ -50,7 +50,7 @@ const WelfarePage = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["welfare"] });
       setModalOpen(false);
-      toast.success("Contribution recorded!");
+      toast.success("Support payment recorded!");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -60,7 +60,7 @@ const WelfarePage = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["welfare"] });
       setModalOpen(false);
-      toast.success("Contribution updated!");
+      toast.success("Support payment updated!");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -69,7 +69,7 @@ const WelfarePage = () => {
     mutationFn: deleteWelfare,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["welfare"] });
-      toast.success("Contribution deleted.");
+      toast.success("Support payment deleted.");
     },
   });
 
@@ -123,23 +123,23 @@ const WelfarePage = () => {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="font-display text-2xl text-foreground flex items-center gap-2">
-            <HandCoins className="w-6 h-6 text-accent" /> Welfare Contributions
+            <HandHeart className="w-6 h-6 text-accent" /> Welfare Support
           </h2>
-          <p className="text-muted-foreground text-sm mt-1">Record and track member welfare payments.</p>
+          <p className="text-muted-foreground text-sm mt-1">Record support the choir gives out to members in need.</p>
         </div>
         <Button onClick={openAdd} className="bg-primary text-primary-foreground">
-          <Plus className="w-4 h-4 mr-1" /> Record Contribution
+          <Plus className="w-4 h-4 mr-1" /> Record Support
         </Button>
       </div>
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-card rounded-xl p-5 border border-border">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Records</p>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Support Records</p>
           <p className="text-3xl font-display text-foreground mt-1">{filtered.length}</p>
         </div>
         <div className="bg-card rounded-xl p-5 border border-border">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Amount</p>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Disbursed</p>
           <p className="text-3xl font-display text-accent mt-1">GHS {total.toFixed(2)}</p>
         </div>
       </div>
@@ -147,13 +147,13 @@ const WelfarePage = () => {
       {/* Filters */}
       <div className="bg-card/50 rounded-xl p-4 border border-border flex gap-4 flex-wrap items-end">
         <div>
-          <label className="text-sm font-bold text-foreground block mb-1">Filter by Member</label>
+          <label className="text-sm font-bold text-foreground block mb-1">Filter by Recipient</label>
           <select
             value={memberFilter}
             onChange={(e) => setMemberFilter(e.target.value)}
             className="rounded-lg bg-card border border-border px-4 py-2 text-foreground text-sm"
           >
-            <option value="">All Members</option>
+            <option value="">All Recipients</option>
             {members.map((m: any) => (
               <option key={m.id} value={m.id}>{m.first_name} {m.last_name}</option>
             ))}
@@ -179,10 +179,10 @@ const WelfarePage = () => {
           <thead>
             <tr className="bg-secondary text-secondary-foreground">
               <th className="px-4 py-3 text-left rounded-tl-lg">#</th>
-              <th className="px-4 py-3 text-left">Member</th>
+              <th className="px-4 py-3 text-left">Recipient</th>
               <th className="px-4 py-3 text-left">Amount</th>
               <th className="px-4 py-3 text-left">Date</th>
-              <th className="px-4 py-3 text-left">Purpose</th>
+              <th className="px-4 py-3 text-left">Reason</th>
               <th className="px-4 py-3 text-left">Notes</th>
               <th className="px-4 py-3 text-left rounded-tr-lg">Actions</th>
             </tr>
@@ -191,7 +191,7 @@ const WelfarePage = () => {
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                  No contributions recorded yet.
+                  No support payments recorded yet.
                 </td>
               </tr>
             )}
@@ -213,7 +213,7 @@ const WelfarePage = () => {
                     size="sm"
                     variant="outline"
                     className="border-destructive text-destructive"
-                    onClick={() => { if (confirm("Delete this contribution?")) deleteMut.mutate(w.id); }}
+                    onClick={() => { if (confirm("Delete this support record?")) deleteMut.mutate(w.id); }}
                   >
                     <Trash2 className="w-3 h-3" />
                   </Button>
@@ -229,18 +229,18 @@ const WelfarePage = () => {
         <DialogContent className="bg-card border-border text-foreground">
           <DialogHeader>
             <DialogTitle className="font-display text-foreground">
-              {editId ? "Edit Contribution" : "Record Contribution"}
+              {editId ? "Edit Support Payment" : "Record Support Payment"}
             </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <Label className="text-foreground">Member *</Label>
+              <Label className="text-foreground">Recipient (Member) *</Label>
               <select
                 value={form.member_id}
                 onChange={(e) => setForm({ ...form, member_id: e.target.value })}
                 className="w-full rounded-lg bg-muted border border-border px-4 py-2 text-foreground text-sm"
               >
-                <option value="">-- Select member --</option>
+                <option value="">-- Select recipient --</option>
                 {members.map((m: any) => (
                   <option key={m.id} value={m.id}>{m.first_name} {m.last_name} ({m.part})</option>
                 ))}
@@ -267,11 +267,11 @@ const WelfarePage = () => {
               />
             </div>
             <div className="col-span-2">
-              <Label className="text-foreground">Purpose</Label>
+              <Label className="text-foreground">Reason for Support</Label>
               <Input
                 value={form.purpose}
                 onChange={(e) => setForm({ ...form, purpose: e.target.value })}
-                placeholder="e.g. Funeral, Wedding, Monthly dues"
+                placeholder="e.g. Bereavement, Medical, Wedding gift"
                 className="bg-muted border-border text-foreground"
               />
             </div>
