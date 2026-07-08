@@ -30,8 +30,12 @@ const Login = () => {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        toast.success("Akwaaba Biom", {
+          description: "Welcome back to the Choir Management System.",
+        });
         navigate("/");
       }
+
     } catch (err: any) {
       toast.error(err.message);
     } finally {
