@@ -63,7 +63,7 @@ const ReportsPage = () => {
 
   const report = useMemo(() => {
     const [fy, fm] = monthVal.split("-").map(Number);
-    let choirMembers = members.filter((m: any) => m.part !== "Director");
+    let choirMembers = members.slice();
     if (type !== "all") choirMembers = choirMembers.filter((m: any) => m.part === type);
 
     let dates: string[] = [];

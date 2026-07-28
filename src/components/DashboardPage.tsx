@@ -16,7 +16,7 @@ const DashboardPage = () => {
   const { data: members = [] } = useQuery({ queryKey: ["members"], queryFn: fetchMembers });
   const { data: attendance = [] } = useQuery({ queryKey: ["attendance-all"], queryFn: fetchAllAttendance });
 
-  const choirMembers = useMemo(() => members.filter((m: any) => m.part !== "Director"), [members]);
+  const choirMembers = useMemo(() => members, [members]);
 
   const stats = useMemo(() => {
     const [fy, fm] = monthFilter.split("-").map(Number);

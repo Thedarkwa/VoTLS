@@ -63,7 +63,6 @@ const AttendancePage = () => {
   });
 
   const choirMembers = members
-    .filter((m: any) => m.part !== "Director")
     .filter((m: any) => !partFilter || m.part === partFilter);
 
   const attMap = new Map(attendance.map((a: any) => [a.member_id, a]));
