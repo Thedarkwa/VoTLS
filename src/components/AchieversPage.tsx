@@ -12,7 +12,7 @@ const AchieversPage = () => {
 
   const data = useMemo(() => {
     const dates = getSundaysInQuarter(year, quarter);
-    const choirMembers = members.filter((m: any) => m.part !== "Director");
+    const choirMembers = members;
     const today = new Date().toISOString().split("T")[0];
     const past = dates.filter((d) => d <= today);
     const pastSet = new Set(past);
